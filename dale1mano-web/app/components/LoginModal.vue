@@ -39,15 +39,26 @@ async function handleLogin() {
     errorMessage.value = ''
     successMessage.value = ''
 
-    const url = `${config.public.apiBase}/api/auth/login` 
+    let data: any
 
-    const data = await $fetch<any>(url, {
-      method: 'POST',
-      body: {
-        email: email.value,
-        password: password.value
+    if (email.value === 'admin@dale1mano.org' && password.value === 'admin123') {
+      // Credenciales de prueba locales para desarrollo (Bypass sin API)
+      data = {
+        token: 'mock_token_123',
+        adminId: 1,
+        nombre: 'Administrador Demo'
       }
-    })
+    } else {
+      // Conexión real con la API
+      const url = `${config.public.apiBase}/api/auth/login` 
+      data = await $fetch<any>(url, {
+        method: 'POST',
+        body: {
+          email: email.value,
+          password: password.value
+        }
+      })
+    }
 
     successMessage.value = `¡Bienvenido/a, ${data.nombre}!`
     

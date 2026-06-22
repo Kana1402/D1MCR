@@ -68,59 +68,65 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
+import { useAdminData } from '~/composables/useAdminData'
+
+const { thematics, projects } = useAdminData()
 
 const temaActivo = ref(0)
 
-const tematicas = [
-  {
-    nombre: 'Salud y bienestar',
-    imagen: '/images/image_cdfd78.jpg',
-    proyectos: [
-      'Caminata de concientización sobre el cáncer de mama.',
-      'Talleres de salud mental.',
-      'Reuniones con personas jóvenes de la ONG sobre temas de salud mental.',
-      'Sesiones de apoyo para jóvenes con profesional en psicología.',
-      'Alianza con la ONG Teen Smart y el proyecto Meso América.',
-      'Charlas sobre sexualidad responsable.',
-      'Charlas de prevención sobre el bullying.'
-    ]
-  },
-  {
-    nombre: 'Educación',
-    imagen: '/images/image_cdfd3a.jpg',
-    proyectos: [
-      'Refuerzo escolar comunitario voluntario.',
-      'Talleres de computación básica y herramientas digitales.',
-      'Donación de paquetes de útiles escolares al inicio del curso lectivo.'
-    ]
-  },
-  {
-    nombre: 'Ambiente',
-    imagen: '/images/image_ce015f.jpg',
-    proyectos: [
-      'Jornadas de limpieza de ríos y playas locales.',
-      'Campañas de reciclaje comunal y clasificación de desechos sólidos.',
-      'Siembra de árboles nativos en zonas degradadas de Matina.'
-    ]
-  },
-  {
-    nombre: 'Justicia Social',
-    imagen: '/images/image_cdfd78.jpg',
-    proyectos: [
-      'Foros sobre los derechos de la juventud rural.',
-      'Talleres de equidad de género y prevención de violencia intrafamiliar.',
-      'Espacios de integración cultural y artística inclusiva.'
-    ]
-  },
-  {
-    nombre: 'Empleabilidad',
-    imagen: '/images/image_cdfd3a.jpg',
-    proyectos: [
-      'Elaboración de currículum vitae y simulación de entrevistas laborales.',
-      'Capacitación en emprendimiento juvenil y formulación de planes de negocio.',
-      'Talleres de oratoria y expresión asertiva para el ámbito profesional.'
-    ]
-  }
-]
+const tematicas = computed(() => {
+  return thematics.value.filter(t => t.estado === 'ACTIVO').map(t => {
+    // Buscar los proyectos asociados en el estado global
+    const associatedProjects = projects.value
+      .filter(p => p.id_tematica === t.id_tematica && p.estado === 'ACTIVO')
+      .map(p => p.titulo)
+    
+    // Si no hay proyectos activos creados por el administrador, usar proyectos demo acordes al área
+    let projList = associatedProjects
+    if (projList.length === 0) {
+      if (t.nombre.toLowerCase().includes('salud')) {
+        projList = [
+          'Caminata de concientización sobre el cáncer de mama.',
+          'Talleres de salud mental.',
+          'Reuniones con personas jóvenes de la ONG sobre temas de salud mental.',
+          'Sesiones de apoyo para jóvenes con profesional en psicología.'
+        ]
+      } else if (t.nombre.toLowerCase().includes('educ')) {
+        projList = [
+          'Refuerzo escolar comunitario voluntario.',
+          'Talleres de computación básica y herramientas digitales.',
+          'Donación de paquetes de útiles escolares al inicio del curso lectivo.'
+        ]
+      } else if (t.nombre.toLowerCase().includes('amb')) {
+        projList = [
+          'Jornadas de limpieza de ríos y playas locales.',
+          'Campañas de reciclaje comunal y clasificación de desechos sólidos.',
+          'Siembra de árboles nativos en zonas degradadas de Matina.'
+        ]
+      } else if (t.nombre.toLowerCase().includes('just')) {
+        projList = [
+          'Foros sobre los derechos de la juventud rural.',
+          'Talleres de equidad de género y prevención de violencia intrafamiliar.',
+          'Espacios de integración cultural y artística inclusiva.'
+        ]
+      } else {
+        projList = [
+          'Elaboración de currículum vitae y simulación de entrevistas laborales.',
+          'Capacitación en emprendimiento juvenil y formulación de planes de negocio.',
+          'Talleres de oratoria y expresión asertiva para el ámbito profesional.'
+        ]
+      }
+    }
+
+    return {
+      nombre: t.nombre,
+      imagen: t.nombre.toLowerCase().includes('salud') ? '/images/image_cdfd78.jpg' :
+              t.nombre.toLowerCase().includes('educ') ? '/images/image_cdfd3a.jpg' :
+              t.nombre.toLowerCase().includes('amb') ? '/images/image_ce015f.jpg' :
+              t.nombre.toLowerCase().includes('just') ? '/images/image_cdfd78.jpg' : '/images/image_cdfd3a.jpg',
+      proyectos: projList
+    }
+  })
+})
 </script>

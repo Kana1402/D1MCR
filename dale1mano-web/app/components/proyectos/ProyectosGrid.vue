@@ -86,8 +86,11 @@
 
 <script setup>
 import { ref, watch, onMounted } from 'vue'
+import { useAdminData } from '~/composables/useAdminData'
 import FiltroProyectos from './FiltroProyectos.vue'
 import ProyectoCard from './ProyectoCard.vue'
+
+const { projects, thematics, users, enrollUserInProject } = useAdminData()
 
 const config = useRuntimeConfig()
 const filtro = ref('activos')
@@ -110,10 +113,31 @@ async function cargarProyectos() {
   try {
     isLoading.value = true
     const estadoAPI = filtro.value === 'activos' ? 'ACTIVO' : 'PASADO'
-    const url = `${config.public.apiBase}/api/proyectos?estado=${estadoAPI}`
-    const data = await $fetch(url)
     
-    // Mapear los datos del backend a los esperados por el frontend
+    let data
+    try {
+      // Intentar conectar con la API real
+      const url = `${config.public.apiBase}/api/proyectos?estado=${estadoAPI}`
+      data = await $fetch(url)
+    } catch (e) {
+      console.warn('API de proyectos no disponible, cargando mock local del panel de administración.')
+      // Fallback local: filtrar los proyectos del estado de administración
+      data = projects.value
+        .filter(p => p.estado === estadoAPI)
+        .map(p => {
+          const tem = thematics.value.find(t => t.id_tematica === p.id_tematica)
+          return {
+            id_proyecto: p.id_proyecto,
+            titulo: p.titulo,
+            descripcion: p.descripcion,
+            fecha_inicio: p.fecha_inicio,
+            fecha_fin: p.fecha_fin,
+            tematica: tem ? tem.nombre : 'General'
+          }
+        })
+    }
+    
+    // Mapear los datos al formato esperado por ProyectoCard.vue
     proyectosFiltrados.value = data.map(proj => {
       const dateObjStart = new Date(proj.fecha_inicio)
       const dateObjEnd = new Date(proj.fecha_fin)
@@ -138,7 +162,7 @@ async function cargarProyectos() {
         titulo: proj.titulo,
         fecha: fechaStr,
         hora: horaStr,
-        lugar: `Temática: ${proj.tematica || 'General'}`,
+        lugar: `Eje: ${proj.tematica || 'General'}`,
         descripcion: proj.descripcion
       }
     })
@@ -150,9 +174,9 @@ async function cargarProyectos() {
   }
 }
 
-watch(filtro, () => {
+watch([filtro, projects], () => {
   cargarProyectos()
-})
+}, { deep: true })
 
 onMounted(() => {
   cargarProyectos()
@@ -169,9 +193,40 @@ const cerrarModal = () => {
   form.value = { nombre: '', cedula: '', telefono: '', fechaNacimiento: '', genero: 'Masculino', cantidad: 1 }
 }
 
-const enviarFormulario = () => {
-  alert(`¡Inscripción exitosa para ${form.value.nombre}! Te esperamos en el proyecto.`)
-  cerrarModal()
+const enviarFormulario = async () => {
+  try {
+    // 1. Verificar si el usuario ya existe en nuestro estado reactivo, sino crearlo
+    let user = users.value.find(u => u.nombre_completo.toLowerCase() === form.value.nombre.trim().toLowerCase())
+    
+    if (!user) {
+      const newId = users.value.length ? Math.max(...users.value.map(u => u.id_usuario)) + 1 : 1
+      const normalizedEmailName = form.value.nombre.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, '')
+      user = {
+        id_usuario: newId,
+        nombre_completo: form.value.nombre.trim(),
+        correo: `${normalizedEmailName}@gmail.com`,
+        rol: 'USER',
+        es_miembro_oficial: false,
+        fecha_registro: new Date().toISOString(),
+        estado: 'ACTIVO'
+      }
+      users.value.push(user)
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('d1m_users', JSON.stringify(users.value))
+      }
+    }
+
+    // 2. Inscribir al voluntario en la actividad dentro de la base de datos simulada
+    if (proyectoSeleccionado.value) {
+      await enrollUserInProject(user.id_usuario, proyectoSeleccionado.value.id)
+    }
+
+    alert(`¡Inscripción exitosa para ${form.value.nombre}! Te esperamos en el proyecto.`)
+    cerrarModal()
+  } catch (error) {
+    console.error(error)
+    alert('Ocurrió un error en la inscripción rápida.')
+  }
 }
 </script>
 

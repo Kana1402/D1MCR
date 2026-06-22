@@ -71,34 +71,37 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
+import { useAdminData } from '~/composables/useAdminData'
+
+const { testimonials, projects } = useAdminData()
 
 // Estado para controlar qué video se está reproduciendo
 const videoActivo = ref(null)
 
-// Pon aquí los IDs reales de tus videos de D1MCR
-const videos = [
-  {
-    titulo: 'Video informativo sobre la ONG D1MCR',
-    youtubeId: 'Q9GUIcrlG4c', // Asegúrate de usar los IDs correctos de tu canal
-    descripcion: 'Les compartimos este video sobre la ONG hecho por las estudiantes Natalia...'
-  },
-  {
-    titulo: 'D1MCR Trailer 2',
-    youtubeId: 'aiejvU5Lxf8',
-    descripcion: 'Trailer sobre Dale Una Mano a Costa Rica y el impacto solidario.'
-  },
-  {
-    titulo: 'Testimonio Ester Esquivel',
-    youtubeId: '8hygiLSmdPk',
-    descripcion: 'Ester nos cuenta su experiencia formando parte de los proyectos de desarrollo juvenil.'
-  },
-  {
-    titulo: 'Testimonio Carmen Mendoza',
-    youtubeId: 'cySCggClpEw',
-    descripcion: 'Impacto transformador y alcance de las misiones solidarias en la región.'
-  }
-]
+// Cargar testimonios dinámicamente desde el composable (solo aprobados por el administrador)
+const videos = computed(() => {
+  return testimonials.value
+    .filter(t => t.aprobado && t.url_video)
+    .map(t => {
+      // Intentar extraer el ID de YouTube del url_video
+      let youtubeId = 'Q9GUIcrlG4c'
+      const match = t.url_video.match(/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/)
+      if (match) {
+        youtubeId = match[1]
+      }
+
+      // Obtener nombre del proyecto asociado
+      const proj = projects.value.find(p => p.id_proyecto === t.id_proyecto)
+      const projTitle = proj ? proj.titulo : 'Proyecto Dale1Mano'
+
+      return {
+        titulo: `${projTitle} - Testimonio`,
+        youtubeId: youtubeId,
+        descripcion: t.contenido
+      }
+    })
+})
 
 // Función de respaldo por si algún video viejo no soporta miniatura HD (1280x720)
 const manejarErrorMiniatura = (event) => {

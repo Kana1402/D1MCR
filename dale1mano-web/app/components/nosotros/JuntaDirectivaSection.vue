@@ -20,12 +20,23 @@
 </template>
 
 <script setup>
-const equipo = [
-  { nombre: 'Orlando Carvajal Valdés', puesto: 'Presidencia', area: 'Dirección General', imagen: '/images/junta/Orlando.jpg', descripcion: 'Líder visionario con amplia experiencia en gestión de proyectos sociales.' },
-  { nombre: 'Erick Marín Muller', puesto: 'Tesoría', area: 'Gestión Admin', imagen: '/images/junta/Erick.jpg', descripcion: 'Experto en gestión financiera y planificación presupuestaria.' },
-  { nombre: 'Keila Pérez Mendoza', puesto: 'Secretaría', area: 'Gestión Admin', imagen: '/images/junta/Keila.jpg', descripcion: 'Especialista en organización y coordinación administrativa.' },
-  { nombre: 'María Fernanda Batista', puesto: 'Vocalías', area: 'Apoyo Proyectos', imagen: '/images/junta/María.jpg', descripcion: 'Profesional dedicado al apoyo y seguimiento de proyectos sociales.' },
-  { nombre: 'Kihaveth Navarro Hernandez', puesto: 'Vocalía', area: 'Dirección General', imagen: '/images/junta/Kihaveth.jpg', descripcion: 'Miembro clave en la dirección estratégica de la organización.' },
-  { nombre: 'Susan Blanchard Blanchard', puesto: 'Fiscalía', area: 'Gestión Admin', imagen: '/images/junta/Susan.jpg', descripcion: 'Experto en control y auditoría interna.' }
-]
+import { computed } from 'vue'
+import { useAdminData } from '~/composables/useAdminData'
+
+const { boardMembers } = useAdminData()
+
+const equipo = computed(() => {
+  return boardMembers.value.map(m => ({
+    nombre: m.nombre_completo,
+    puesto: m.cargo,
+    imagen: m.url_fotografia || '/images/junta/Orlando.jpg',
+    descripcion: m.nombre_completo === 'Orlando Carvajal Valdés' ? 'Líder visionario con amplia experiencia en gestión de proyectos sociales.' :
+                 m.nombre_completo === 'Erick Marín Muller' ? 'Experto en gestión financiera y planificación presupuestaria.' :
+                 m.nombre_completo === 'Keila Pérez Mendoza' ? 'Especialista en organización y coordinación administrativa.' :
+                 m.nombre_completo === 'María Fernanda Batista' ? 'Profesional dedicado al apoyo y seguimiento de proyectos sociales.' :
+                 m.nombre_completo === 'Kihaveth Navarro Hernandez' ? 'Miembro clave en la dirección estratégica de la organización.' :
+                 m.nombre_completo === 'Susan Blanchard Blanchard' ? 'Fiscalía y control administrativo interno.' : 
+                 'Coordinador oficial y miembro de la junta directiva de Dale1Mano.'
+  }))
+})
 </script>

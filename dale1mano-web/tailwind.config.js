@@ -9,7 +9,19 @@ module.exports = {
     "./app/error.vue",
   ],
   theme: {
-    extend: {},
+    extend: {
+      colors: {
+        // Paleta de marca Dale1Mano
+        brand: {
+          blue:        '#0b31a8',
+          'blue-dark': '#09278a',
+          'blue-light':'#1e3a8a',
+          orange:      '#e0531c',
+          'orange-dark':'#c44618',
+          'orange-light':'#f06732',
+        },
+      },
+    },
   },
   plugins: [],
 }
